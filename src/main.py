@@ -2,6 +2,7 @@ from fastapi import FastAPI
 
 from src.dataset import load_dataset
 from src.models import FeatureVectorChurn, DatasetRowChurn
+from src.preprocessing import prepare_data
 
 app = FastAPI()
 
@@ -30,4 +31,16 @@ async def info():
         "columns": len(df.columns),
         "column_names": df.columns.tolist(),
         "churn_distribution": df["churn"].value_counts().to_dict()
+    }
+
+
+@app.get("/dataset/split-info")
+async def split_info():
+    df = load_dataset()
+    x_train, x_test, y_train, y_test = prepare_data(df)
+    return {
+        "train_size": len(x_train),
+        "test_size": len(y_test),
+        "churn_train": y_train.value_counts().to_dict(),
+        "churn_test": y_test.value_counts().to_dict()
     }
