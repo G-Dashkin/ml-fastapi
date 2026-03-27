@@ -1,6 +1,8 @@
 from fastapi import FastAPI
+from sklearn.metrics import accuracy_score, f1_score
 
 from src.dataset import load_dataset
+from src.model import train_churn_model
 from src.models import FeatureVectorChurn, DatasetRowChurn
 from src.preprocessing import prepare_data
 
@@ -43,4 +45,16 @@ async def split_info():
         "test_size": len(y_test),
         "churn_train": y_train.value_counts().to_dict(),
         "churn_test": y_test.value_counts().to_dict()
+    }
+
+
+@app.post("/model/train")
+async def train():
+    df = load_dataset()
+    X_train, X_test, y_train, y_test = prepare_data(df)
+    trained_pipeline = train_churn_model(X_train, y_train)
+    y_pred = trained_pipeline.predict(X_test)
+    return {
+        "accuracy": accuracy_score(y_test, y_pred),
+        "f1": f1_score(y_test, y_pred)
     }
