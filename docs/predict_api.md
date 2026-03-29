@@ -95,7 +95,7 @@
 ```
 
 **Параметры:**
-- `n_estimators: 50` — небольше количество деревьев
+- `n_estimators: 50` — небольшое количество деревьев
 - `max_depth: 10` — ограничиваем глубину для скорости
 
 **Ответ:**
@@ -166,6 +166,8 @@
 
 ## Пример запроса к /predict
 
+### Клиент скорее всего уйдёт
+
 **Запрос:**
 ```json
 {
@@ -181,8 +183,60 @@
 }
 ```
 
+**Ответ:**
+```json
+{
+  "churn": 1,
+  "probability": "97.07%"
+}
+```
+
+### Клиент скорее всего останется
+
+**Запрос:**
+```json
+{
+  "monthly_fee": 49.99,
+  "usage_hours": 120,
+  "support_requests": 0,
+  "account_age_months": 36,
+  "failed_payments": 0,
+  "region": "europe",
+  "device_type": "desktop",
+  "payment_method": "card",
+  "autopay_enabled": 1
+}
+```
+
+**Ответ:**
+```json
+{
+  "churn": 0,
+  "probability": "0.33%"
+}
+```
+
 **Интерпретация:**
 - churn: 1 — клиент скорее всего уйдёт
 - churn: 0 — клиент скорее всего останется
 - probability — вероятность ухода (или остаться) в процентах
 ---
+
+### POST /model/train — неверный model_type
+
+**Запрос:**
+```json
+{
+  "model_type": "xgboost",
+  "hyperparameters": {}
+}
+```
+
+**Ответ (500):**
+```json
+{
+  "code": 500,
+  "message": "Internal Server Error",
+  "details": "Unknown model_type: xgboost. Use 'logreg' or 'random_forest'"
+}
+```

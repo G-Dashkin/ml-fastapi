@@ -1,9 +1,11 @@
 from fastapi import FastAPI
+from fastapi import HTTPException
+from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
 from sklearn.metrics import accuracy_score, f1_score
 from src.dataset import load_dataset
 import pandas as pd
-from fastapi import HTTPException
-from src.models import FeatureVectorChurn, DatasetRowChurn, PredictionResponseChurn, TrainingConfigChurn
+from src.models import FeatureVectorChurn, DatasetRowChurn, PredictionResponseChurn, TrainingConfigChurn, ErrorResponse
 from src.preprocessing import prepare_data, NUMERIC_COLS, CATEGORICAL_COLS
 from src.model import train_churn_model, save_churn_model, load_churn_model
 
@@ -104,3 +106,27 @@ async def model_schema():
         **{col: "float" for col in NUMERIC_COLS},
         **{col: "str" for col in CATEGORICAL_COLS}
     }
+
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request, exc):
+    return JSONResponse(
+        status_code=exc.status_code,
+        content=ErrorResponse(
+            code=exc.status_code,
+            message=exc.detail,
+            details=""
+        ).dict()
+    )
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request, exc):
+    return JSONResponse(
+        status_code=422,
+        content=ErrorResponse(
+            code=422,
+            message="Неверные данные запроса",
+            details=str(exc.errors())
+        ).dict()
+    )

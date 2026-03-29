@@ -26,3 +26,9 @@ class PredictionResponseChurn(BaseModel):
 class TrainingConfigChurn(BaseModel):
     model_type: str
     hyperparameters: Dict[str, Any]  # Указываем Any, чтобы можно было подставлять любые типы значений/параметров
+
+
+class ErrorResponse(BaseModel):
+    code: int
+    message: str
+    details: str
