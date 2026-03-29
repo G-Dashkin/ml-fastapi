@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from typing import Dict, Any
 
 
 class FeatureVectorChurn(BaseModel):
@@ -20,3 +21,8 @@ class DatasetRowChurn(FeatureVectorChurn):
 class PredictionResponseChurn(BaseModel):
     churn: int
     probability: str
+
+
+class TrainingConfigChurn(BaseModel):
+    model_type: str
+    hyperparameters: Dict[str, Any]  # Указываем Any, чтобы можно было подставлять любые типы значений/параметров

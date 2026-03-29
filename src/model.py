@@ -1,3 +1,4 @@
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.compose import ColumnTransformer
@@ -16,15 +17,18 @@ preprocessor = ColumnTransformer(
     ]
 )
 
-pipeline = Pipeline(
-    steps=[
+
+def train_churn_model(X_train, y_train, model_type, hyperparameters):
+    if model_type == "logreg": classifier = LogisticRegression(**hyperparameters, class_weight="balanced")
+    elif model_type == "random_forest": classifier = RandomForestClassifier(**hyperparameters, class_weight="balanced")
+    else: raise ValueError(f"Unknown model_type: {model_type}. Use 'logreg' or 'random_forest'")
+
+    # Создаём pipeline с выбранной моделью
+    pipeline = Pipeline([
         ("preprocessor", preprocessor),
-        ("classifier", LogisticRegression(max_iter=1000, class_weight="balanced"))
-    ]
-)
-
-
-def train_churn_model(X_train, y_train): return pipeline.fit(X_train, y_train)
+        ("classifier", classifier)
+    ])
+    return pipeline.fit(X_train, y_train)
 
 
 def save_churn_model(trained_pipeline, metrics: dict):

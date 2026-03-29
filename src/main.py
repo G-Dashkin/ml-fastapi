@@ -3,7 +3,7 @@ from sklearn.metrics import accuracy_score, f1_score
 from src.dataset import load_dataset
 import pandas as pd
 from fastapi import HTTPException
-from src.models import FeatureVectorChurn, DatasetRowChurn, PredictionResponseChurn
+from src.models import FeatureVectorChurn, DatasetRowChurn, PredictionResponseChurn, TrainingConfigChurn
 from src.preprocessing import prepare_data
 from src.model import train_churn_model, save_churn_model, load_churn_model
 
@@ -62,14 +62,18 @@ async def split_info():
 
 
 @app.post("/model/train")
-async def train():
+async def train(config: TrainingConfigChurn):
     df = load_dataset()                                       # Загружаем данные из дата сета
     X_train, X_test, y_train, y_test = prepare_data(df)       # Подготавливаем данные, получаем 80% на обучение и 20% тестовых
-    trained_pipeline = train_churn_model(X_train, y_train)    # Обучаем модель на 80% данных
+
+    # Обучаем модель (на 80% данных), указываем модель и передаем параметры
+    trained_pipeline = train_churn_model(X_train, y_train, config.model_type, config.hyperparameters)
     y_prediction = trained_pipeline.predict(X_test)           # Тестируем модель на оставшихся 20%
     save_churn_model(trained_pipeline, {               # Сохраняем обученную модель
         "accuracy": accuracy_score(y_test, y_prediction),
-        "f1": f1_score(y_test, y_prediction)
+        "f1": f1_score(y_test, y_prediction),
+        "model_type": config.model_type,
+        "hyperparameters": config.hyperparameters
     })
     global loaded_model
     loaded_model = load_churn_model()
@@ -85,5 +89,10 @@ async def model_status():
     return {
         "trained": True,
         "trained_at": loaded_model["trained_at"],
-        "metrics": loaded_model["metrics"]
+        "model_type": loaded_model["metrics"].get("model_type"),
+        "hyperparameters": loaded_model["metrics"].get("hyperparameters"),
+        "metrics": {
+            "accuracy": loaded_model["metrics"]["accuracy"],
+            "f1": loaded_model["metrics"]["f1"]
+        }
     }

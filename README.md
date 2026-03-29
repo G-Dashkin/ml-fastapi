@@ -25,7 +25,7 @@ ml-fastapi/
 │   └── churn_model.joblib
 ├── src/
 │   ├── main.py            (FastAPI эндпоинты)
-│   ├── models.py          (Pydantic модели данных)
+│   ├── models.py          (Pydantic модели: FeatureVectorChurn, TrainingConfigChurn)
 │   ├── dataset.py         (загрузка датасета)
 │   ├── preprocessing.py   (подготовка данных)
 │   └──  model.py          (обучение и сохранение ML модели)
@@ -33,3 +33,10 @@ ml-fastapi/
 │   └── test_main.py
 └── docs/
     └── algorithm.md
+
+---
+## Метрики
+- **Accuracy** — процент правильных предсказаний (общее качество)
+- **F1** — гармоническое среднее precision и recall (качество на редком классе)
+Данные несбалансированы (80% остаются, 20% уходят), поэтому F1 более важна чем accuracy.
+---
