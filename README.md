@@ -7,13 +7,14 @@ pip install -r requirements.txt
 uvicorn src.main:app --reload
 
 ## Эндпоинты
-- GET /                  — статус сервиса
-- GET /dataset/preview   — первые N строк датасета
-- GET /dataset/info      — статистика датасета
+- GET /                   — статус сервиса
+- GET /dataset/preview    — первые N строк датасета
+- GET /dataset/info       — статистика датасета
 - GET /dataset/split-info — размеры train/test выборок
-- POST /model/train      — обучение модели
-- GET /model/status      — статус и метрики модели
-- POST /predict          — предсказание churn
+- POST /model/train       — обучение модели
+- GET /model/status       — статус и метрики модели
+- POST /predict           — предсказание churn
+- GET /schema             — схема модели
 
 ## Структура проекта
 ml-fastapi/

@@ -4,7 +4,7 @@ from src.dataset import load_dataset
 import pandas as pd
 from fastapi import HTTPException
 from src.models import FeatureVectorChurn, DatasetRowChurn, PredictionResponseChurn, TrainingConfigChurn
-from src.preprocessing import prepare_data
+from src.preprocessing import prepare_data, NUMERIC_COLS, CATEGORICAL_COLS
 from src.model import train_churn_model, save_churn_model, load_churn_model
 
 app = FastAPI()
@@ -19,7 +19,7 @@ async def root(): return {"message": "ml churn service is running"}
 async def predict(data: FeatureVectorChurn):
     # Проверяем что модель обучена
     if loaded_model is None: raise HTTPException(status_code=400, detail="Модель не обучена. Сначала переходим на /model/train")
-    df = pd.DataFrame([data.dict()])  # Конвертируем данные клиента в DataFrame
+    df = pd.DataFrame(data=[data.dict()], columns=NUMERIC_COLS+CATEGORICAL_COLS)  # Конвертируем данные клиента в DataFrame
 
     # Получаем предсказание и вероятность
     prediction = loaded_model["pipeline"].predict(df)[0]
@@ -95,4 +95,12 @@ async def model_status():
             "accuracy": loaded_model["metrics"]["accuracy"],
             "f1": loaded_model["metrics"]["f1"]
         }
+    }
+
+
+@app.get("/model/schema")
+async def model_schema():
+    return {
+        **{col: "float" for col in NUMERIC_COLS},
+        **{col: "str" for col in CATEGORICAL_COLS}
     }
