@@ -1,13 +1,12 @@
 from fastapi import FastAPI
 from sklearn.metrics import accuracy_score, f1_score
-
 from src.dataset import load_dataset
-from src.model import train_churn_model
 from src.models import FeatureVectorChurn, DatasetRowChurn
 from src.preprocessing import prepare_data
+from src.model import train_churn_model, save_churn_model, load_churn_model
 
 app = FastAPI()
-
+loaded_model = load_churn_model()
 
 @app.get("/")
 async def root(): return {"message": "ml churn service is running"}
@@ -50,11 +49,27 @@ async def split_info():
 
 @app.post("/model/train")
 async def train():
-    df = load_dataset()
-    X_train, X_test, y_train, y_test = prepare_data(df)
-    trained_pipeline = train_churn_model(X_train, y_train)
-    y_pred = trained_pipeline.predict(X_test)
+    df = load_dataset()                                       # Загружаем данные из дата сета
+    X_train, X_test, y_train, y_test = prepare_data(df)       # Подготавливаем данные, получаем 80% на обучение и 20% тестовых
+    trained_pipeline = train_churn_model(X_train, y_train)    # Обучаем модель на 80% данных
+    y_prediction = trained_pipeline.predict(X_test)           # Тестируем модель на оставшихся 20%
+    save_churn_model(trained_pipeline, {               # Сохраняем обученную модель
+        "accuracy": accuracy_score(y_test, y_prediction),
+        "f1": f1_score(y_test, y_prediction)
+    })
+    global loaded_model
+    loaded_model = load_churn_model()
     return {
-        "accuracy": accuracy_score(y_test, y_pred),
-        "f1": f1_score(y_test, y_pred)
+        "accuracy": accuracy_score(y_test, y_prediction),     # Выводим % правильных ответов
+        "f1": f1_score(y_test, y_prediction)                  # Выводим качество предсказания редкого класса (ушедших)
+    }
+
+
+@app.get("/model/status")
+async def model_status():
+    if loaded_model is None: return {"trained": False}
+    return {
+        "trained": True,
+        "trained_at": loaded_model["trained_at"],
+        "metrics": loaded_model["metrics"]
     }
