@@ -15,3 +15,8 @@ class FeatureVectorChurn(BaseModel):
 
 class DatasetRowChurn(FeatureVectorChurn):
     churn: int
+
+
+class PredictionResponseChurn(BaseModel):
+    churn: int
+    probability: str
