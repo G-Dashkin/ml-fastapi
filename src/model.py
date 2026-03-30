@@ -4,11 +4,13 @@ from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.compose import ColumnTransformer
 from sklearn.linear_model import LogisticRegression
 from src.preprocessing import NUMERIC_COLS, CATEGORICAL_COLS
+from pathlib import Path
 import joblib
 import datetime
-from pathlib import Path
+import json
 
 MODEL_PATH = Path(__file__).parent.parent / "models" / "churn_model.joblib"
+HISTORY_PATH = Path(__file__).parent.parent / "models" / "training_history.json"
 
 preprocessor = ColumnTransformer(
     transformers=[
@@ -42,3 +44,17 @@ def save_churn_model(trained_pipeline, metrics: dict):
 def load_churn_model():
     if MODEL_PATH.exists(): return joblib.load(MODEL_PATH)
     return None
+
+
+def load_history() -> list:
+    if HISTORY_PATH.exists():
+        with open(HISTORY_PATH, "r") as f:
+            return json.load(f)
+    return []
+
+
+def save_history(record: dict):
+    history = load_history()
+    history.append(record)
+    with open(HISTORY_PATH, "w") as f:
+        json.dump(history, f, indent=2)

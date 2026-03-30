@@ -1,0 +1,22 @@
+[
+  {
+    "timestamp": "2026-03-30T09:15:33.180864",
+    "model_type": "logreg",
+    "hyperparameters": {
+      "max_iter": 2000,
+      "C": 0.5
+    },
+    "accuracy": 0.635,
+    "f1": 0.4112903225806452
+  },
+  {
+    "timestamp": "2026-03-30T09:15:40.090821",
+    "model_type": "logreg",
+    "hyperparameters": {
+      "max_iter": 2000,
+      "C": 0.5
+    },
+    "accuracy": 0.635,
+    "f1": 0.4112903225806452
+  }
+]

@@ -1,13 +1,15 @@
+from datetime import datetime
+
 from fastapi import FastAPI
 from fastapi import HTTPException
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from sklearn.metrics import accuracy_score, f1_score
 from src.dataset import load_dataset
-import pandas as pd
 from src.models import FeatureVectorChurn, DatasetRowChurn, PredictionResponseChurn, TrainingConfigChurn, ErrorResponse
+from src.model import train_churn_model, save_churn_model, load_churn_model, save_history, load_history
 from src.preprocessing import prepare_data, NUMERIC_COLS, CATEGORICAL_COLS
-from src.model import train_churn_model, save_churn_model, load_churn_model
+import pandas as pd
 
 app = FastAPI()
 loaded_model = load_churn_model()
@@ -77,6 +79,13 @@ async def train(config: TrainingConfigChurn):
         "model_type": config.model_type,
         "hyperparameters": config.hyperparameters
     })
+    save_history({
+        "timestamp": datetime.now().isoformat(),
+        "model_type": config.model_type,
+        "hyperparameters": config.hyperparameters,
+        "accuracy": accuracy_score(y_test, y_prediction),
+        "f1": f1_score(y_test, y_prediction)
+    })
     global loaded_model
     loaded_model = load_churn_model()
     return {
@@ -108,8 +117,12 @@ async def model_schema():
     }
 
 
+@app.get("/model/metrics")
+async def model_metrics(n: int = 5): return load_history()[-n:]
+
+
 @app.exception_handler(HTTPException)
-async def http_exception_handler(request, exc):
+async def http_exception_handler(exc):
     return JSONResponse(
         status_code=exc.status_code,
         content=ErrorResponse(
@@ -121,7 +134,7 @@ async def http_exception_handler(request, exc):
 
 
 @app.exception_handler(RequestValidationError)
-async def validation_exception_handler(request, exc):
+async def validation_exception_handler(exc):
     return JSONResponse(
         status_code=422,
         content=ErrorResponse(
