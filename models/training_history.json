@@ -18,5 +18,32 @@
     },
     "accuracy": 0.635,
     "f1": 0.4112903225806452
+  },
+  {
+    "timestamp": "2026-03-31T06:11:54.721734",
+    "model_type": "logreg",
+    "hyperparameters": {
+      "max_iter": 100
+    },
+    "accuracy": 0.6325,
+    "f1": 0.40963855421686746
+  },
+  {
+    "timestamp": "2026-03-31T06:13:21.904434",
+    "model_type": "logreg",
+    "hyperparameters": {
+      "max_iter": 100
+    },
+    "accuracy": 0.6325,
+    "f1": 0.40963855421686746
+  },
+  {
+    "timestamp": "2026-03-31T06:14:27.047117",
+    "model_type": "logreg",
+    "hyperparameters": {
+      "max_iter": 100
+    },
+    "accuracy": 0.6325,
+    "f1": 0.40963855421686746
   }
 ]

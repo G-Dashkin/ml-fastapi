@@ -122,7 +122,7 @@ async def model_metrics(n: int = 5): return load_history()[-n:]
 
 
 @app.exception_handler(HTTPException)
-async def http_exception_handler(exc):
+async def http_exception_handler(request, exc):
     return JSONResponse(
         status_code=exc.status_code,
         content=ErrorResponse(
@@ -134,7 +134,7 @@ async def http_exception_handler(exc):
 
 
 @app.exception_handler(RequestValidationError)
-async def validation_exception_handler(exc):
+async def validation_exception_handler(request, exc):
     return JSONResponse(
         status_code=422,
         content=ErrorResponse(
