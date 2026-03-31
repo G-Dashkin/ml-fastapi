@@ -1,0 +1,34 @@
+from pydantic import BaseModel
+from typing import Dict, Any
+
+
+class FeatureVectorChurn(BaseModel):
+    monthly_fee: float
+    usage_hours: float
+    support_requests: int
+    account_age_months: int
+    failed_payments: int
+    region: str
+    device_type: str
+    payment_method: str
+    autopay_enabled: int
+
+
+class DatasetRowChurn(FeatureVectorChurn):
+    churn: int
+
+
+class PredictionResponseChurn(BaseModel):
+    churn: int
+    probability: str
+
+
+class TrainingConfigChurn(BaseModel):
+    model_type: str
+    hyperparameters: Dict[str, Any]  # Указываем Any, чтобы можно было подставлять любые типы значений/параметров
+
+
+class ErrorResponse(BaseModel):
+    code: int
+    message: str
+    details: str
