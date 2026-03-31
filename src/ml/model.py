@@ -3,21 +3,17 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.compose import ColumnTransformer
 from sklearn.linear_model import LogisticRegression
-from src.preprocessing import NUMERIC_COLS, CATEGORICAL_COLS
+from src.ml.preprocessing import NUMERIC_COLS, CATEGORICAL_COLS
 from pathlib import Path
-import joblib
-import datetime
-import json
+import joblib, datetime, json
 
-MODEL_PATH = Path(__file__).parent.parent / "models" / "churn_model.joblib"
-HISTORY_PATH = Path(__file__).parent.parent / "models" / "training_history.json"
+MODEL_PATH = Path(__file__).parent.parent.parent / "models" / "churn_model.joblib"
+HISTORY_PATH = Path(__file__).parent.parent.parent / "models" / "training_history.json"
 
-preprocessor = ColumnTransformer(
-    transformers=[
-        ("num", StandardScaler(), NUMERIC_COLS),
-        ("cat", OneHotEncoder(handle_unknown="ignore"), CATEGORICAL_COLS)
-    ]
-)
+preprocessor = ColumnTransformer(transformers=[
+    ("num", StandardScaler(), NUMERIC_COLS),
+    ("cat", OneHotEncoder(handle_unknown="ignore"), CATEGORICAL_COLS)
+])
 
 
 def train_churn_model(X_train, y_train, model_type, hyperparameters):

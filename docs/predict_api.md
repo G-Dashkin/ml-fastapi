@@ -1,13 +1,18 @@
-# Описание алгоритма
+# Описание API
 
-## Модель
-Поддерживаются две модели:
-- LogisticRegression из scikit-learn с class_weight="balanced"
-- RandomForestClassifier из scikit-learn с class_weight="balanced"
+## Модели
+
+| model_type | Описание |
+|---|---|
+| `logreg` | LogisticRegression, быстрая, интерпретируемая |
+| `random_forest` | RandomForestClassifier, выше accuracy |
+
+Обе обучаются с `class_weight="balanced"`.
 
 ## Признаки
-- Числовые: monthly_fee, usage_hours, support_requests, account_age_months, failed_payments, autopay_enabled
-- Категориальные: region, device_type, payment_method
+
+- Числовые (StandardScaler): `monthly_fee`, `usage_hours`, `support_requests`, `account_age_months`, `failed_payments`, `autopay_enabled`
+- Категориальные (OneHotEncoder): `region`, `device_type`, `payment_method`
 
 ## Предобработка
 - Числовые: StandardScaler (приводит к одному масштабу)
@@ -29,131 +34,35 @@
 
 ---
 
-## Примеры запросов к /model/train
+## POST /model/train
 
-### LogisticRegression — быстрое обучение
-
-**Запрос:**
+**LogisticRegression:**
 ```json
 {
   "model_type": "logreg",
-  "hyperparameters": {
-    "max_iter": 1000,
+  "hyperparameters": { 
+    "max_iter": 1000, 
     "C": 1.0
   }
 }
 ```
-
-**Ответ:**
-```json
-{
-  "accuracy": 0.635,
-  "f1": 0.411
-}
-```
-
----
-
-### LogisticRegression — точное обучение
-
-**Запрос:**
-```json
-{
-  "model_type": "logreg",
-  "hyperparameters": {
-    "max_iter": 2000,
-    "C": 0.5
-  }
-}
-```
+Ответ: `{ "accuracy": 0.635, "f1": 0.411 }`
 
 **Параметры:**
 - `max_iter: 2000` — больше итераций для лучшей сходимости
 - `C: 0.5` — сильнее штраф за ошибки (регуляризация)
 
-**Ответ:**
-```json
-{
-  "accuracy": 0.635,
-  "f1": 0.41
-}
-```
-
----
-
-### RandomForestClassifier — быстрое обучение
-
-**Запрос:**
+**RandomForestClassifier:**
 ```json
 {
   "model_type": "random_forest",
-  "hyperparameters": {
-    "n_estimators": 50,
-    "max_depth": 10
-  }
-}
-```
-
-**Параметры:**
-- `n_estimators: 50` — небольшое количество деревьев
-- `max_depth: 10` — ограничиваем глубину для скорости
-
-**Ответ:**
-```json
-{
-  "accuracy": 0.72,
-  "f1": 0.11
-}
-```
-
----
-
-### RandomForestClassifier — точное обучение
-
-**Запрос:**
-```json
-{
-  "model_type": "random_forest",
-  "hyperparameters": {
-    "n_estimators": 100,
-    "max_depth": 15,
+  "hyperparameters": { 
+    "n_estimators": 100, 
+    "max_depth": 15, 
     "random_state": 42
   }
 }
 ```
-
-**Параметры:**
-- `n_estimators: 100` — оптимальное количество деревьев
-- `max_depth: 15` — хорошая глубина для точности
-- `random_state: 42` — фиксируем случайность для воспроизводимости
-
-**Ответ:**
-```json
-{
-  "accuracy": 0.7975,
-  "f1": 0.129
-}
-```
-
----
-### RandomForestClassifier — глубокое обучение (лучше качество)
-
-**Запрос:**
-```json
-{
-  "model_type": "random_forest",
-  "hyperparameters": {
-    "n_estimators": 200,
-    "max_depth": 20,
-    "random_state": 42
-  }
-}
-```
-
-**Параметры:**
-- `n_estimators: 200` — много деревьев для лучшего усреднения
-- `max_depth: 20` — глубже деревья = лучше качество (медленнее обучение)
-
 **Ответ:**
 ```json
 {
@@ -162,59 +71,48 @@
 }
 ```
 
+**Параметры:**
+- `n_estimators: 50` — небольшое количество деревьев
+- `max_depth: 10` — ограничиваем глубину для скорости
+- `n_estimators: 200` — много деревьев для лучшего усреднения
+- `max_depth: 20` — глубже деревья = лучше качество (медленнее обучение)
 ---
 
-## Пример запроса к /predict
+## POST /predict
 
-### Клиент скорее всего уйдёт
-
-**Запрос:**
+**Клиент уйдёт:**
 ```json
 {
-  "monthly_fee": 9.99,
-  "usage_hours": 2,
+  "monthly_fee": 9.99, 
+  "usage_hours": 2, 
   "support_requests": 5,
-  "account_age_months": 1,
-  "failed_payments": 4,
+  "account_age_months": 1, 
+  "failed_payments": 4, 
   "region": "africa",
-  "device_type": "mobile",
-  "payment_method": "crypto",
+  "device_type": "mobile", 
+  "payment_method": "crypto", 
   "autopay_enabled": 0
 }
 ```
+Ответ: `{ "churn": 1, "probability": "97.07%" }`
 
-**Ответ:**
+**Клиент останется:**
 ```json
 {
-  "churn": 1,
-  "probability": "97.07%"
-}
-```
-
-### Клиент скорее всего останется
-
-**Запрос:**
-```json
-{
-  "monthly_fee": 49.99,
-  "usage_hours": 120,
+  "monthly_fee": 49.99, 
+  "usage_hours": 120, 
   "support_requests": 0,
-  "account_age_months": 36,
-  "failed_payments": 0,
+  "account_age_months": 36, 
+  "failed_payments": 0, 
   "region": "europe",
-  "device_type": "desktop",
-  "payment_method": "card",
+  "device_type": "desktop", 
+  "payment_method": "card", 
   "autopay_enabled": 1
 }
 ```
+Ответ: `{ "churn": 0, "probability": "0.33%" }`
 
-**Ответ:**
-```json
-{
-  "churn": 0,
-  "probability": "0.33%"
-}
-```
+---
 
 **Интерпретация:**
 - churn: 1 — клиент скорее всего уйдёт
@@ -240,3 +138,13 @@
   "details": "Unknown model_type: xgboost. Use 'logreg' or 'random_forest'"
 }
 ```
+
+```json
+{ "code": 400, "message": "Описание", "details": "" }
+```
+## Формат ошибок
+| Код | Причина |
+|---|---|
+| 400 | Модель не обучена |
+| 422 | Неверные данные запроса (отсутствуют поля, неверные типы) |
+| 500 | Неверный model_type |
