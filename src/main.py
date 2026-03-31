@@ -10,9 +10,13 @@ from src.models import FeatureVectorChurn, DatasetRowChurn, PredictionResponseCh
 from src.model import train_churn_model, save_churn_model, load_churn_model, save_history, load_history
 from src.preprocessing import prepare_data, NUMERIC_COLS, CATEGORICAL_COLS
 import pandas as pd
+import logging
 
 app = FastAPI()
 loaded_model = load_churn_model()
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 @app.get("/")
@@ -28,6 +32,8 @@ async def predict(data: FeatureVectorChurn):
     # Получаем предсказание и вероятность
     prediction = loaded_model["pipeline"].predict(df)[0]
     probability = loaded_model["pipeline"].predict_proba(df)[0][1]
+
+    logger.info(f"Predict called, result: churn={prediction.item()}")
 
     return PredictionResponseChurn(
         churn=int(prediction.item()),
@@ -88,6 +94,7 @@ async def train(config: TrainingConfigChurn):
     })
     global loaded_model
     loaded_model = load_churn_model()
+    logger.info(f"Training complete: accuracy={accuracy_score(y_test, y_prediction):.3f}")
     return {
         "accuracy": accuracy_score(y_test, y_prediction),     # Выводим % правильных ответов
         "f1": f1_score(y_test, y_prediction)                  # Выводим качество предсказания редкого класса (ушедших)
@@ -121,8 +128,23 @@ async def model_schema():
 async def model_metrics(n: int = 5): return load_history()[-n:]
 
 
+@app.get("/health")
+async def health():
+    try:
+        load_dataset()
+        dataset_available = True
+    except:
+        dataset_available = False
+    return {
+        "status": "ok",
+        "model_loaded": loaded_model is not None,
+        "dataset_available": dataset_available
+    }
+
+
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request, exc):
+    logger.error(exc.detail)
     return JSONResponse(
         status_code=exc.status_code,
         content=ErrorResponse(
@@ -135,11 +157,13 @@ async def http_exception_handler(request, exc):
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request, exc):
+    logger.error(exc.detail)
     return JSONResponse(
         status_code=422,
         content=ErrorResponse(
             code=422,
             message="Неверные данные запроса",
-            details=str(exc.errors())
+            details=exc.errors()
         ).dict()
     )
+
