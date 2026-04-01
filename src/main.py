@@ -15,10 +15,37 @@ app.include_router(router)
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request, exc):
     logger.error(exc.detail)
-    return JSONResponse(status_code=exc.status_code, content=ErrorResponse(code=exc.status_code, message=exc.detail, details="").model_dump())
+    return JSONResponse(
+        status_code=exc.status_code,
+        content=ErrorResponse(
+            code=exc.status_code,
+            message=exc.detail,
+            details=""
+            ).model_dump()
+        )
 
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request, exc):
     logger.error(str(exc.errors()))
-    return JSONResponse(status_code=422, content=ErrorResponse(code=422, message="Неверные данные запроса", details=str(exc.errors())).model_dump())
+    return JSONResponse(
+        status_code=422,
+        content=ErrorResponse(
+            code=422,
+            message="Неверные данные запроса",
+            details=str(exc.errors())
+        ).model_dump()
+    )
+
+
+@app.exception_handler(Exception)
+async def general_exception_handler(request, exc):
+    logger.error(str(exc))
+    return JSONResponse(
+        status_code=500,
+        content=ErrorResponse(
+            code=500,
+            message="Internal Server Error",
+            details=str(exc)
+        ).model_dump()
+    )

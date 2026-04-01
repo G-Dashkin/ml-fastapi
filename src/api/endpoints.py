@@ -5,6 +5,7 @@ from src.ml.dataset import load_dataset
 from src.ml.model import train_churn_model, save_churn_model, load_churn_model, save_history, load_history
 from src.ml.preprocessing import prepare_data, NUMERIC_COLS, CATEGORICAL_COLS
 from src.schemas.churn_models import FeatureVectorChurn, DatasetRowChurn, PredictionResponseChurn, TrainingConfigChurn
+from typing import Union, List
 import pandas as pd
 import logging
 
@@ -19,13 +20,21 @@ async def root(): return {"message": "ml churn service is running"}
 
 
 @router.post("/predict")
-async def predict(data: FeatureVectorChurn):
+async def predict(data: Union[FeatureVectorChurn, List[FeatureVectorChurn]]):
     if loaded_model is None: raise HTTPException(status_code=400, detail="Модель не обучена. Сначала переходим на /model/train")
-    df = pd.DataFrame(data=[data.model_dump()], columns=NUMERIC_COLS+CATEGORICAL_COLS)
-    prediction = loaded_model["pipeline"].predict(df)[0]
-    probability = loaded_model["pipeline"].predict_proba(df)[0][1]
-    logger.info(f"Predict called, result: churn={prediction.item()}")
-    return PredictionResponseChurn(churn=int(prediction.item()), probability=str(round(float(probability)*100, 2))+"%")
+    items = data if isinstance(data, list) else [data]
+    df = pd.DataFrame([item.model_dump() for item in items], columns=NUMERIC_COLS + CATEGORICAL_COLS)
+    predictions = loaded_model["pipeline"].predict(df)
+    probabilities = loaded_model["pipeline"].predict_proba(df)[:, 1]
+    results = [
+        PredictionResponseChurn(
+            churn=int(p.item()),
+            probability=round(float(prob), 4)
+        )
+        for p, prob in zip(predictions, probabilities)
+    ]
+    logger.info(f"Predict called for {len(items)} items")
+    return results if isinstance(data, list) else results[0]
 
 
 @router.get("/dataset/preview")
@@ -69,7 +78,11 @@ async def model_status():
 
 @router.get("/model/schema")
 async def model_schema():
-    return {**{col: "float" for col in NUMERIC_COLS}, **{col: "str" for col in CATEGORICAL_COLS}}
+    int_cols = ["support_requests", "account_age_months", "failed_payments", "autopay_enabled"]
+    return {
+        **{col: ("int" if col in int_cols else "float") for col in NUMERIC_COLS},
+        **{col: "str" for col in CATEGORICAL_COLS}
+    }
 
 
 @router.get("/model/metrics")

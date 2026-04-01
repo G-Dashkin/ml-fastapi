@@ -20,7 +20,7 @@ class DatasetRowChurn(FeatureVectorChurn):
 
 class PredictionResponseChurn(BaseModel):
     churn: int
-    probability: str
+    probability: float
 
 
 class TrainingConfigChurn(BaseModel):
